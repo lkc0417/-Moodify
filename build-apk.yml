@@ -1,0 +1,48 @@
+
+name: Build Moodify APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Create package.json
+        run: |
+          npm init -y
+          npm install @capacitor/core@6.2.0 @capacitor/android@6.2.0
+          npm install -D vite@5.4.0 @capacitor/cli@6.2.0
+
+      - name: Configure Moodify
+        run: |
+          echo '{"scripts":{"build":"vite"}}' > package.json.tmp
+          npx cap init Moodify com.moodify.app --web-dir=dist
+
+      - name: Build Web
+        run: |
+          npm run build
+
+      - name: Build Android APK
+        run: |
+          npx cap add android
+          npx cap sync android
+          cd android
